@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ### This section for General Configuration
-PROJECT_ID="fe-mmcnichol"
+PROJECT_ID="$3"
 GCLOUD_REGION="us-east1"
 GCLOUD_ZONE="$GCLOUD_REGION-b"
 
