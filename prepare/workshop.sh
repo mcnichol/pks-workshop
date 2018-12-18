@@ -6,13 +6,13 @@ GCLOUD_REGION="us-east1"
 GCLOUD_ZONE="$GCLOUD_REGION-b"
 
 ### This section for GCP Prep and Configuration
-MY_PKS="mcnichol-pks"
-PKS_SERVICE_ACCOUNT="pks-service-account"
+MY_PKS="$2-pks"
+PKS_SERVICE_ACCOUNT="$MY_PKS-service-account"
 PKS_IAM_EMAIL="${PKS_SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com"
 NETWORK="$MY_PKS-network"
-NETWORK_SUBNET_RUNTIME="$MY_PKS-subnet-useast1-runtime"
-NETWORK_SUBNET_INFRA="$MY_PKS-subnet-useast1-infra"
-NETWORK_SUBNET_SERVICES="$MY_PKS-subnet-useast1-services"
+NETWORK_SUBNET_INFRA="$MY_PKS-subnet-infrastructure"
+NETWORK_SUBNET_RUNTIME="$MY_PKS-subnet-runtime"
+NETWORK_SUBNET_SERVICES="$MY_PKS-subnet-services"
 
 FW_RULE_ALLOW_SSH="$MY_PKS-allow-ssh"
 FW_RULE_ALLOW_HTTP="$MY_PKS-allow-http"
@@ -22,16 +22,24 @@ FW_RULE_ALLOW_PAS_ALL="$MY_PKS-allow-pas-all"
 FW_RULE_ALLOW_CF_TCP="$MY_PKS-allow-cf-tcp"
 FW_RULE_ALLOW_SSH_PROXY="$MY_PKS-allow-ssh-proxy"
 
-INSTANCE_NAT_NAME="$MY_PKS-nat-gw"
-
+INSTANCE_NAT="$MY_PKS-nat-gw"
+ADDRESS_NAT="$MY_PKS-nat-ip"
 ROUTE_INSTANCE_NAT="$MY_PKS-nat-route"
 
+INSTANCE_OPSMAN="$MY_PKS-opsman"
+ADDRESS_OPSMAN="$MY_PKS-om-ip"
+
 ### This section for K8s Master/Worker Configuration
-MASTER_SERVICE_ACCOUNT="pks-master"
+ADDRESS_PKS_LB="$MY_PKS-lb"
+ADDRESS_PKS_CLUSTER="$MY_PKS-cluster"
+
+MASTER_SERVICE_ACCOUNT="$MY_PKS-master"
 MASTER_IAM_EMAIL="$MASTER_SERVICE_ACCOUNT@$PROJECT_ID.iam.gserviceaccount.com"
 
-WORKER_SERVICE_ACCOUNT="pks-worker"
+WORKER_SERVICE_ACCOUNT="$MY_PKS-worker"
 WORKER_IAM_EMAIL="$WORKER_SERVICE_ACCOUNT@$PROJECT_ID.iam.gserviceaccount.com"
+
+FW_RULE_ALLOW_PKS_LB="pks-api"
 
 # Authenticate with gcloud unless already logged in
 GCLOUD_CURRENT_AUTHENTICATED="$(gcloud auth list --filter=status:ACTIVE --format='value(account)')"
@@ -45,8 +53,8 @@ else
 fi
 
 case $1 in
-  gcp-setup)
-    gcloud iam service-accounts create $PKS_SERVICE_ACCOUNT
+  setup-gcp)
+    gcloud iam service-accounts create $PKS_SERVICE_ACCOUNT --display-name=$PKS_SERVICE_ACCOUNT
     gcloud iam service-accounts keys create $PKS_SERVICE_ACCOUNT.service-account.key.json --iam-account=$PKS_IAM_EMAIL
 
     gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$PKS_IAM_EMAIL --role=roles/iam.serviceAccountUser
@@ -57,18 +65,19 @@ case $1 in
     gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$PKS_IAM_EMAIL --role=roles/storage.admin
 
     gcloud compute networks create "$NETWORK" --subnet-mode=custom
+    gcloud compute networks subnets create "$NETWORK_SUBNET_INFRA"    --network="$NETWORK" --range=192.168.101.0/26 --region="$GCLOUD_REGION"
     gcloud compute networks subnets create "$NETWORK_SUBNET_RUNTIME"  --network="$NETWORK" --range=192.168.16.0/22  --region="$GCLOUD_REGION"
     gcloud compute networks subnets create "$NETWORK_SUBNET_SERVICES" --network="$NETWORK" --range=192.168.20.0/22  --region="$GCLOUD_REGION"
-    gcloud compute networks subnets create "$NETWORK_SUBNET_INFRA"    --network="$NETWORK" --range=192.168.101.0/26 --region="$GCLOUD_REGION"
 
-    # Create NAT Instance
-    gcloud compute instances create "$INSTANCE_NAT_NAME" \
+    # Create NAT Instance for limiting exposed endpoints
+    gcloud compute addresses create $ADDRESS_NAT --region $GCLOUD_REGION
+    gcloud compute instances create "$INSTANCE_NAT" \
       --project "$PROJECT_ID" \
       --zone "$GCLOUD_ZONE" \
-      --network-interface private-network-ip=192.168.101.2,network="$NETWORK",subnet="$NETWORK_SUBNET_INFRA" \
+      --network-interface address=$ADDRESS_NAT,private-network-ip=192.168.101.2,network="$NETWORK",subnet="$NETWORK_SUBNET_INFRA" \
         --tags "nat-traverse","$MY_PKS-nat-instance" \
       --machine-type "n1-standard-4" \
-        --metadata-from-file startup-script="nat-gw-startup.sh" \
+        --metadata-from-file startup-script="startup-scripts/nat-gw-startup.sh" \
         --image "ubuntu-1404-trusty-v20181203" \
         --image-project "ubuntu-os-cloud" \
         --boot-disk-size "10" \
@@ -76,7 +85,7 @@ case $1 in
         --can-ip-forward
 
     # Create Routes
-    gcloud compute routes create $ROUTE_INSTANCE_NAT --destination-range=0.0.0.0/0 --priority=800 --tags $MY_PKS --next-hop-instance=$INSTANCE_NAT_NAME --network=$NETWORK
+    gcloud compute routes create $ROUTE_INSTANCE_NAT --destination-range=0.0.0.0/0 --priority=800 --tags $MY_PKS --next-hop-instance=$INSTANCE_NAT --network=$NETWORK
 
     # Allow Internal && Director communication over SSH and CLI req'd ports
     gcloud compute firewall-rules create $FW_RULE_ALLOW_SSH       --network=$NETWORK --allow=tcp:22         --source-ranges=0.0.0.0/0   --target-tags="allow-ssh"
@@ -86,11 +95,27 @@ case $1 in
     gcloud compute firewall-rules create $FW_RULE_ALLOW_PAS_ALL   --network=$NETWORK --allow=tcp,udp,icmp   --source-tags="$MY_PKS","$MY_PKS-opsman","nat-traverse" --target-tags="$MY_PKS","$MY_PKS-opsman","nat-traverse"
     gcloud compute firewall-rules create $FW_RULE_ALLOW_CF_TCP    --network=$NETWORK --allow=tcp:1024-65535 --source-ranges=0.0.0.0/0  --target-tags="$MY_PKS-cf-tcp"
     gcloud compute firewall-rules create $FW_RULE_ALLOW_SSH_PROXY --network=$NETWORK --allow=tcp:2222       --source-ranges=0.0.0.0/0  --target-tags="$MY_PKS-ssh-proxy","diego-brain"
+
+    # Opsman Creation
+    gcloud compute addresses create $ADDRESS_OPSMAN --region $GCLOUD_REGION
+    gcloud compute instances create "$INSTANCE_OPSMAN" \
+      --project $PROJECT_ID --zone $GCLOUD_ZONE \
+      --network-interface address="$ADDRESS_OPSMAN",private-network-ip=192.168.101.5,network=$NETWORK,subnet=$NETWORK_SUBNET_INFRA \
+      --tags "$MY_PKS-opsman","allow-https","allow-ssh" \
+      --machine-type "n1-standard-2" \
+        --image "opsman-pcf-gcp-2-3" \
+        --boot-disk-size "100" --boot-disk-type "pd-ssd" \
+        --service-account=$PKS_IAM_EMAIL \
+        --scopes=default,compute-rw,cloud-platform
+
     ;;
 
-  pks-setup)
-    gcloud iam service-accounts create $MASTER_SERVICE_ACCOUNT
-    cloud iam service-accounts keys create $MASTER_SERVICE_ACCOUNT.service-account.key.json --iam-account=$MASTER_IAM_EMAIL
+  setup-pks)
+    gcloud compute addresses create $ADDRESS_PKS_LB --region $GCLOUD_REGION
+    gcloud compute addresses create $ADDRESS_PKS_CLUSTER --region $GCLOUD_REGION
+
+    gcloud iam service-accounts create $MASTER_SERVICE_ACCOUNT --display-name=$MASTER_SERVICE_ACCOUNT
+    gcloud iam service-accounts keys create $MASTER_SERVICE_ACCOUNT.service-account.key.json --iam-account=$MASTER_IAM_EMAIL
 
     gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$MASTER_IAM_EMAIL --role=roles/compute.instanceAdmin.v1
     gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$MASTER_IAM_EMAIL --role=roles/compute.networkAdmin
@@ -99,19 +124,33 @@ case $1 in
     gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$MASTER_IAM_EMAIL --role=roles/compute.viewer
     gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$MASTER_IAM_EMAIL --role=roles/iam.serviceAccountUser
 
-    gcloud iam service-accounts create $WORKER_SERVICE_ACCOUNT
+    gcloud iam service-accounts create $WORKER_SERVICE_ACCOUNT --display-name=$WORKER_SERVICE_ACCOUNT
     gcloud iam service-accounts keys create $WORKER_SERVICE_ACCOUNT.service-account.key.json --iam-account=$WORKER_IAM_EMAIL
 
     gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$WORKER_IAM_EMAIL --role=roles/compute.viewer
+
+    gcloud compute firewall-rules create $FW_RULE_ALLOW_PKS_LB --network=$NETWORK --priority=800 --direction=ingress --allow=tcp:8443,tcp:9021 --source-ranges=0.0.0.0/0   --target-tags="pks-api"
     ;;
 
-  gcp-destroy)
+  destroy-gcp)
 
     gcloud iam service-accounts delete $PKS_IAM_EMAIL --quiet
 
+    gcloud projects remove-iam-policy-binding $PROJECT_ID --member=serviceAccount:$PKS_IAM_EMAIL --role=roles/iam.serviceAccountUser
+    gcloud projects remove-iam-policy-binding $PROJECT_ID --member=serviceAccount:$PKS_IAM_EMAIL --role=roles/iam.serviceAccountTokenCreator
+    gcloud projects remove-iam-policy-binding $PROJECT_ID --member=serviceAccount:$PKS_IAM_EMAIL --role=roles/compute.instanceAdmin.v1
+    gcloud projects remove-iam-policy-binding $PROJECT_ID --member=serviceAccount:$PKS_IAM_EMAIL --role=roles/compute.networkAdmin
+    gcloud projects remove-iam-policy-binding $PROJECT_ID --member=serviceAccount:$PKS_IAM_EMAIL --role=roles/compute.storageAdmin
+    gcloud projects remove-iam-policy-binding $PROJECT_ID --member=serviceAccount:$PKS_IAM_EMAIL --role=roles/storage.admin
+
     gcloud compute routes delete $ROUTE_INSTANCE_NAT --quiet
 
-    gcloud compute instances delete $INSTANCE_NAT_NAME --quiet
+    #Keep these around till workshop completes
+    #gcloud compute addresses delete $ADDRESS_OPSMAN --quiet
+    gcloud compute addresses delete $ADDRESS_NAT --quiet
+
+    gcloud compute instances delete $INSTANCE_OPSMAN --quiet
+    gcloud compute instances delete $INSTANCE_NAT --quiet
 
     gcloud compute firewall-rules delete $FW_RULE_ALLOW_SSH --quiet
     gcloud compute firewall-rules delete $FW_RULE_ALLOW_HTTP --quiet
@@ -127,11 +166,22 @@ case $1 in
 
     gcloud compute networks delete $NETWORK --quiet
 
-    gcloud compute addresses delete $PKS_SERVICE_ACCOUNT --quiet
     ;;
-  pks-destroy)
+  destroy-pks)
+
+    #gcloud compute addresses delete $ADDRESS_PKS_LB --quiet
+    #gcloud compute addresses delete $ADDRESS_PKS_CLUSTER --quiet
+
     gcloud iam service-accounts delete $MASTER_IAM_EMAIL --quiet
+    gcloud projects remove-iam-policy-binding $PROJECT_ID --member=serviceAccount:$MASTER_IAM_EMAIL --role=roles/compute.instanceAdmin.v1
+    gcloud projects remove-iam-policy-binding $PROJECT_ID --member=serviceAccount:$MASTER_IAM_EMAIL --role=roles/compute.networkAdmin
+    gcloud projects remove-iam-policy-binding $PROJECT_ID --member=serviceAccount:$MASTER_IAM_EMAIL --role=roles/compute.securityAdmin
+    gcloud projects remove-iam-policy-binding $PROJECT_ID --member=serviceAccount:$MASTER_IAM_EMAIL --role=roles/compute.storageAdmin
+    gcloud projects remove-iam-policy-binding $PROJECT_ID --member=serviceAccount:$MASTER_IAM_EMAIL --role=roles/compute.viewer
+    gcloud projects remove-iam-policy-binding $PROJECT_ID --member=serviceAccount:$MASTER_IAM_EMAIL --role=roles/iam.serviceAccountUser
+
     gcloud iam service-accounts delete $WORKER_IAM_EMAIL --quiet
+    gcloud projects remove-iam-policy-binding $PROJECT_ID --member=serviceAccount:$WORKER_IAM_EMAIL --role=roles/compute.viewer
     ;;
   *)
     echo "Da fuq?"

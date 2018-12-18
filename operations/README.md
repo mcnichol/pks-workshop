@@ -1,13 +1,13 @@
 Ops Agenda
-  * Setup BOSH
+  * Prepare GCP
     * Create IAM ServiceAccount
     * Create keys
     * Give service account role
     * Create Network and subnet
     * Create Firewall Rules
-  *   Installing Foundation
-    * Step 1: Set up an IAM Service Account
-    * Step 2: Enable Google Cloud APIs
+  * Install/Config OpsMan
+    * PivNet
+    * Create Image
     * Step 3: Create a GCP Network with Subnets
     * Step 4: Create NAT Instances
     * Create Routes for NAT Instances
