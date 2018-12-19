@@ -39,7 +39,7 @@ MASTER_IAM_EMAIL="$MASTER_SERVICE_ACCOUNT@$PROJECT_ID.iam.gserviceaccount.com"
 WORKER_SERVICE_ACCOUNT="$MY_PKS-worker"
 WORKER_IAM_EMAIL="$WORKER_SERVICE_ACCOUNT@$PROJECT_ID.iam.gserviceaccount.com"
 
-FW_RULE_ALLOW_PKS_LB="pks-api"
+FW_RULE_ALLOW_PKS_LB="$MY_PKS-api"
 
 # Authenticate with gcloud unless already logged in
 GCLOUD_CURRENT_AUTHENTICATED="$(gcloud auth list --filter=status:ACTIVE --format='value(account)')"
@@ -55,7 +55,7 @@ fi
 case $1 in
   setup-gcp)
     gcloud iam service-accounts create $PKS_SERVICE_ACCOUNT --display-name=$PKS_SERVICE_ACCOUNT
-    gcloud iam service-accounts keys create $PKS_SERVICE_ACCOUNT.service-account.key.json --iam-account=$PKS_IAM_EMAIL
+    gcloud iam service-accounts keys create $PKS_SERVICE_ACCOUNT.key.json --iam-account=$PKS_IAM_EMAIL
 
     gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$PKS_IAM_EMAIL --role=roles/iam.serviceAccountUser
     gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$PKS_IAM_EMAIL --role=roles/iam.serviceAccountTokenCreator
@@ -115,7 +115,7 @@ case $1 in
     gcloud compute addresses create $ADDRESS_PKS_CLUSTER --region $GCLOUD_REGION
 
     gcloud iam service-accounts create $MASTER_SERVICE_ACCOUNT --display-name=$MASTER_SERVICE_ACCOUNT
-    gcloud iam service-accounts keys create $MASTER_SERVICE_ACCOUNT.service-account.key.json --iam-account=$MASTER_IAM_EMAIL
+    gcloud iam service-accounts keys create $MASTER_SERVICE_ACCOUNT.key.json --iam-account=$MASTER_IAM_EMAIL
 
     gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$MASTER_IAM_EMAIL --role=roles/compute.instanceAdmin.v1
     gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$MASTER_IAM_EMAIL --role=roles/compute.networkAdmin
@@ -125,11 +125,11 @@ case $1 in
     gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$MASTER_IAM_EMAIL --role=roles/iam.serviceAccountUser
 
     gcloud iam service-accounts create $WORKER_SERVICE_ACCOUNT --display-name=$WORKER_SERVICE_ACCOUNT
-    gcloud iam service-accounts keys create $WORKER_SERVICE_ACCOUNT.service-account.key.json --iam-account=$WORKER_IAM_EMAIL
+    gcloud iam service-accounts keys create $WORKER_SERVICE_ACCOUNT.key.json --iam-account=$WORKER_IAM_EMAIL
 
     gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$WORKER_IAM_EMAIL --role=roles/compute.viewer
 
-    gcloud compute firewall-rules create $FW_RULE_ALLOW_PKS_LB --network=$NETWORK --priority=800 --direction=ingress --allow=tcp:8443,tcp:9021 --source-ranges=0.0.0.0/0   --target-tags="pks-api"
+    gcloud compute firewall-rules create $FW_RULE_ALLOW_PKS_LB --network=$NETWORK --priority=800 --direction=ingress --allow=tcp:8443,tcp:9021 --source-ranges=0.0.0.0/0   --target-tags="$FW_RULE_ALLOW_PKS_LB"
     ;;
 
   destroy-gcp)
@@ -184,6 +184,6 @@ case $1 in
     gcloud projects remove-iam-policy-binding $PROJECT_ID --member=serviceAccount:$WORKER_IAM_EMAIL --role=roles/compute.viewer
     ;;
   *)
-    echo "Da fuq?"
+    echo "Huh"
     ;;
 esac
