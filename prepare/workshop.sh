@@ -182,6 +182,8 @@ case $1 in
 
     gcloud iam service-accounts delete $WORKER_IAM_EMAIL --quiet
     gcloud projects remove-iam-policy-binding $PROJECT_ID --member=serviceAccount:$WORKER_IAM_EMAIL --role=roles/compute.viewer
+
+    gcloud compute firewall-rules delete $FW_RULE_ALLOW_PKS_LB --quiet
     ;;
   *)
     echo "Huh"
