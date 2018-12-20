@@ -205,7 +205,7 @@ esac
 #
 # Create users for Interal UAA
 # Target PKS API
-# uaac target https://api.$USER.pks.mcnichol.rocks:8443 --ca-cert $(echo $BOSH_CA_CERT)
+# MY_USER=userX; uaac target https://api.$MY_USER.pks.mcnichol.rocks:8443 --ca-cert $(echo $BOSH_CA_CERT)
 #
 # Get PKS UAA Secret from Opsman > PKS Tile >  Credentials Tab > UAA Management Admin Client  > Link to Creds  > Secret
 # uaac token client get admin -s $UAA_MGMT_ADMIN_CLIENT_SECRET
@@ -216,8 +216,9 @@ esac
 # Add Scope to User
 # uaac member add (pks.clusters.admin | pks.clusters.manage)
 #
+# ## Ueage ./this-script.sh userX
 #for POST_FIX in {a..m}; do
-#  THIS_USER="user2$POST_FIX-admin"
+#  THIS_USER="$1$POST_FIX-admin"
 #
 #  echo "Adding user: $THIS_USER with Scope: pks.clusters.admin"
 #  uaac user add "$THIS_USER" --emails $THIS_USER@email.com -p password
@@ -225,7 +226,7 @@ esac
 #done
 #
 #for POST_FIX in {a..m}; do
-#  THIS_USER="user2$POST_FIX-manage"
+#  THIS_USER="$1$POST_FIX-manage"
 #
 #  echo "Adding user: $THIS_USER with Scope: pks.clusters.manage"
 #  uaac user add "$THIS_USER" --emails $THIS_USER@email.com -p password
