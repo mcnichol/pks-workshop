@@ -189,3 +189,47 @@ case $1 in
     echo "Huh"
     ;;
 esac
+
+
+# Created BOSH Commandline Credentials on each Opsman.  User can now:
+# Activate permissioned Service Account with appropriate keys
+# gcloud auth activate-service-account --key-file=$USER-pks-service-account.key.json
+#
+# SSH onto Opsman
+# gcloud compute ssh --project $PROJECT_ID  --zone $ZONE "$USER-pks-psman"
+#
+# eval BOSH env_vars
+# eval $(cat bosh-creds)
+#
+# bosh vms || bosh instances --ps || bosh --help
+#
+# Create users for Interal UAA
+# Target PKS API
+# uaac target https://api.$USER.pks.mcnichol.rocks:8443 --ca-cert $(echo $BOSH_CA_CERT)
+#
+# Get PKS UAA Secret from Opsman > PKS Tile >  Credentials Tab > UAA Management Admin Client  > Link to Creds  > Secret
+# uaac token client get admin -s $UAA_MGMT_ADMIN_CLIENT_SECRET
+#
+# Grant PKS Access
+# uaac user add $USERNAME --email $EMAIL -p $PASSWORD
+#
+# Add Scope to User
+# uaac member add (pks.clusters.admin | pks.clusters.manage)
+#
+#for POST_FIX in {a..m}; do
+#  THIS_USER="user2$POST_FIX-admin"
+#
+#  echo "Adding user: $THIS_USER with Scope: pks.clusters.admin"
+#  uaac user add "$THIS_USER" --emails $THIS_USER@email.com -p password
+#  uaac member add pks.clusters.admin $THIS_USER
+#done
+#
+#for POST_FIX in {a..m}; do
+#  THIS_USER="user2$POST_FIX-manage"
+#
+#  echo "Adding user: $THIS_USER with Scope: pks.clusters.manage"
+#  uaac user add "$THIS_USER" --emails $THIS_USER@email.com -p password
+#  uaac member add pks.clusters.manage $THIS_USER
+#done
+#
+
