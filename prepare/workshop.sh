@@ -233,4 +233,12 @@ esac
 #  uaac member add pks.clusters.manage $THIS_USER
 #done
 #
+# make user2-pks firewall rule allowing 8443 for master access
+# Do not give anyone credentials....they will break your heart
 
+# Destroying Compute VMs with GCLOUD
+# Remove first row showing NAME
+# scorched earth
+# for vm in $(gcloud compute instances list | awk '{print $1}'); do
+#   gcloud compute instances delete $vm --quiet
+# done
