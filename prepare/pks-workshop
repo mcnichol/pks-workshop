@@ -70,22 +70,22 @@ case $1 in
     gcloud compute networks subnets create "$NETWORK_SUBNET_SERVICES" --network="$NETWORK" --range=192.168.20.0/22  --region="$GCLOUD_REGION"
 
     # Create NAT Instance for limiting exposed endpoints
-    gcloud compute addresses create $ADDRESS_NAT --region $GCLOUD_REGION
-    gcloud compute instances create "$INSTANCE_NAT" \
-      --project "$PROJECT_ID" \
-      --zone "$GCLOUD_ZONE" \
-      --network-interface address=$ADDRESS_NAT,private-network-ip=192.168.101.2,network="$NETWORK",subnet="$NETWORK_SUBNET_INFRA" \
-        --tags "nat-traverse","$MY_PKS-nat-instance" \
-      --machine-type "n1-standard-4" \
-        --metadata-from-file startup-script="startup-scripts/nat-gw-startup.sh" \
-        --image "ubuntu-1404-trusty-v20181203" \
-        --image-project "ubuntu-os-cloud" \
-        --boot-disk-size "10" \
-        --boot-disk-type "pd-standard" \
-        --can-ip-forward
-
-    # Create Routes
-    gcloud compute routes create $ROUTE_INSTANCE_NAT --destination-range=0.0.0.0/0 --priority=800 --tags $MY_PKS --next-hop-instance=$INSTANCE_NAT --network=$NETWORK
+#    gcloud compute addresses create $ADDRESS_NAT --region $GCLOUD_REGION
+#    gcloud compute instances create "$INSTANCE_NAT" \
+#      --project "$PROJECT_ID" \
+#      --zone "$GCLOUD_ZONE" \
+#      --network-interface address=$ADDRESS_NAT,private-network-ip=192.168.101.2,network="$NETWORK",subnet="$NETWORK_SUBNET_INFRA" \
+#        --tags "nat-traverse","$MY_PKS-nat-instance" \
+#      --machine-type "n1-standard-4" \
+#        --metadata-from-file startup-script="startup-scripts/nat-gw-startup.sh" \
+#        --image "ubuntu-1404-trusty-v20181203" \
+#        --image-project "ubuntu-os-cloud" \
+#        --boot-disk-size "10" \
+#        --boot-disk-type "pd-standard" \
+#        --can-ip-forward
+#
+#    # Create Routes
+#    gcloud compute routes create $ROUTE_INSTANCE_NAT --destination-range=0.0.0.0/0 --priority=800 --tags $MY_PKS --next-hop-instance=$INSTANCE_NAT --network=$NETWORK
 
     # Allow Internal && Director communication over SSH and CLI req'd ports
     gcloud compute firewall-rules create $FW_RULE_ALLOW_SSH       --network=$NETWORK --allow=tcp:22         --source-ranges=0.0.0.0/0   --target-tags="allow-ssh"
@@ -186,7 +186,16 @@ case $1 in
     gcloud compute firewall-rules delete $FW_RULE_ALLOW_PKS_LB --quiet
     ;;
   *)
-    echo "Huh"
+    echo ""
+    echo "Usage: pks-workshop [args...]"
+    echo ""
+    echo -e "\t setup-gcp [env name] [project ID]\t-\tConfigure environment with a user prefix based on env-name using project-id associated to logged-in user"
+    echo ""
+    echo -e "\tsetup-pks [user name] [project ID]\t-\tConfigure K8s infrastructure necessary for deploying PKS into Opsman"
+    echo ""
+    echo -e "\tdestroy-gcp [user name] [project ID]\t-\tDestroy GCP Infrastructure"
+    echo ""
+    echo -e "\tdestroy-pks [user name] [project ID]\t-\tDestroy PKS Infrastructure"
     ;;
 esac
 
@@ -242,3 +251,9 @@ esac
 # for vm in $(gcloud compute instances list | awk '{print $1}'); do
 #   gcloud compute instances delete $vm --quiet
 # done
+
+# om ip
+# lb ip
+# harbor ip
+# nat ip
+
