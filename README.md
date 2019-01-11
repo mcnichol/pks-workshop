@@ -6,6 +6,7 @@ This script is for setting up a PKS Workshop in the "Let's bake a cake in 5 minu
 * ~~Allow running pks-workshop command folder agnostic~~
 * ~~Change from Setup to Create~~
 * ~~tarball service-keys for sharing~~
+* ~~Compress lib files~~
 * Map IP's which can be seen at `gcloud compute addresses list` and implement them in chosen registry.
 * Iterate through all instances and delete during destroy-gcp (possibly scorch-gcp)
 * Step-by-Step guide on configuring/uploading OpsmanVM as a base
