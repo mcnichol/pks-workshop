@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
 
-### This section for General Configuration
+SCRIPT_DIR=${BASH_SOURCE%/*}
+STARTUP_SCRIPTS="$SCRIPT_DIR/../prepare/startup-scripts"
+
+COMMAND="$1"
+USER="$2"
 PROJECT_ID="$3"
+
+### This section for General Configuration
 GCLOUD_REGION="us-east1"
 GCLOUD_ZONE="$GCLOUD_REGION-b"
 
 ### This section for GCP Prep and Configuration
-MY_PKS="$2-pks"
+MY_PKS="$USER-pks"
 PKS_SERVICE_ACCOUNT="$MY_PKS-service-account"
 PKS_IAM_EMAIL="${PKS_SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com"
 NETWORK="$MY_PKS-network"
@@ -52,8 +58,8 @@ else
   echo "gcloud auth revoke $GCLOUD_CURRENT_AUTHENTICATED"
 fi
 
-case $1 in
-  setup-gcp)
+case $COMMAND in
+  create-gcp)
     gcloud iam service-accounts create $PKS_SERVICE_ACCOUNT --display-name=$PKS_SERVICE_ACCOUNT
     gcloud iam service-accounts keys create $PKS_SERVICE_ACCOUNT.key.json --iam-account=$PKS_IAM_EMAIL
 
@@ -69,7 +75,7 @@ case $1 in
     gcloud compute networks subnets create "$NETWORK_SUBNET_RUNTIME"  --network="$NETWORK" --range=192.168.16.0/22  --region="$GCLOUD_REGION"
     gcloud compute networks subnets create "$NETWORK_SUBNET_SERVICES" --network="$NETWORK" --range=192.168.20.0/22  --region="$GCLOUD_REGION"
 
-    # Create NAT Instance for limiting exposed endpoints
+#    # Create NAT Instance for limiting exposed endpoints
 #    gcloud compute addresses create $ADDRESS_NAT --region $GCLOUD_REGION
 #    gcloud compute instances create "$INSTANCE_NAT" \
 #      --project "$PROJECT_ID" \
@@ -77,7 +83,7 @@ case $1 in
 #      --network-interface address=$ADDRESS_NAT,private-network-ip=192.168.101.2,network="$NETWORK",subnet="$NETWORK_SUBNET_INFRA" \
 #        --tags "nat-traverse","$MY_PKS-nat-instance" \
 #      --machine-type "n1-standard-4" \
-#        --metadata-from-file startup-script="startup-scripts/nat-gw-startup.sh" \
+#        --metadata-from-file startup-script="$STARTUP_SCRIPTS/nat-gw-startup.sh" \
 #        --image "ubuntu-1404-trusty-v20181203" \
 #        --image-project "ubuntu-os-cloud" \
 #        --boot-disk-size "10" \
@@ -93,8 +99,7 @@ case $1 in
     gcloud compute firewall-rules create $FW_RULE_ALLOW_HTTPS     --network=$NETWORK --allow=tcp:443        --source-ranges=0.0.0.0/0   --target-tags="allow-https","router"
     gcloud compute firewall-rules create $FW_RULE_ALLOW_HTTP_8080 --network=$NETWORK --allow=tcp:8080       --source-ranges=0.0.0.0/0   --target-tags="router"
     gcloud compute firewall-rules create $FW_RULE_ALLOW_PAS_ALL   --network=$NETWORK --allow=tcp,udp,icmp   --source-tags="$MY_PKS","$MY_PKS-opsman","nat-traverse" --target-tags="$MY_PKS","$MY_PKS-opsman","nat-traverse"
-    gcloud compute firewall-rules create $FW_RULE_ALLOW_CF_TCP    --network=$NETWORK --allow=tcp:1024-65535 --source-ranges=0.0.0.0/0  --target-tags="$MY_PKS-cf-tcp"
-    gcloud compute firewall-rules create $FW_RULE_ALLOW_SSH_PROXY --network=$NETWORK --allow=tcp:2222       --source-ranges=0.0.0.0/0  --target-tags="$MY_PKS-ssh-proxy","diego-brain"
+    gcloud compute firewall-rules create $FW_RULE_ALLOW_SSH_PROXY --network=$NETWORK --allow=tcp:2222       --source-ranges=0.0.0.0/0  --target-tags="$MY_PKS-ssh-proxy"
 
     # Opsman Creation
     gcloud compute addresses create $ADDRESS_OPSMAN --region $GCLOUD_REGION
@@ -110,7 +115,7 @@ case $1 in
 
     ;;
 
-  setup-pks)
+  create-pks)
     gcloud compute addresses create $ADDRESS_PKS_LB --region $GCLOUD_REGION
     gcloud compute addresses create $ADDRESS_PKS_CLUSTER --region $GCLOUD_REGION
 
@@ -131,7 +136,9 @@ case $1 in
 
     gcloud compute firewall-rules create $FW_RULE_ALLOW_PKS_LB --network=$NETWORK --priority=800 --direction=ingress --allow=tcp:8443,tcp:9021 --source-ranges=0.0.0.0/0   --target-tags="$FW_RULE_ALLOW_PKS_LB"
     ;;
-
+  package)
+      tar -cf $USER-keys.tar $USER*.json
+    ;;
   destroy-gcp)
 
     gcloud iam service-accounts delete $PKS_IAM_EMAIL --quiet
@@ -189,71 +196,12 @@ case $1 in
     echo ""
     echo "Usage: pks-workshop [args...]"
     echo ""
-    echo -e "\t setup-gcp [env name] [project ID]\t-\tConfigure environment with a user prefix based on env-name using project-id associated to logged-in user"
+    echo -e "\tcreate-gcp [env name] [project ID]\t-\tConfigure environment with a user prefix based on env-name using project-id associated to logged-in user"
     echo ""
-    echo -e "\tsetup-pks [user name] [project ID]\t-\tConfigure K8s infrastructure necessary for deploying PKS into Opsman"
+    echo -e "\tcreate-pks [user name] [project ID]\t-\tConfigure K8s infrastructure necessary for deploying PKS into Opsman"
     echo ""
     echo -e "\tdestroy-gcp [user name] [project ID]\t-\tDestroy GCP Infrastructure"
     echo ""
     echo -e "\tdestroy-pks [user name] [project ID]\t-\tDestroy PKS Infrastructure"
     ;;
 esac
-
-
-# Created BOSH Commandline Credentials on each Opsman.  User can now:
-# Activate permissioned Service Account with appropriate keys
-# gcloud auth activate-service-account --key-file=$USER-pks-service-account.key.json
-#
-# SSH onto Opsman
-# gcloud compute ssh --project $PROJECT_ID  --zone $ZONE "$USER-pks-psman"
-#
-# eval BOSH env_vars
-# eval $(cat bosh-creds)
-#
-# bosh vms || bosh instances --ps || bosh --help
-#
-# Create users for Interal UAA
-# Target PKS API
-# MY_USER=userX; uaac target https://api.$MY_USER.pks.mcnichol.rocks:8443 --ca-cert $(echo $BOSH_CA_CERT)
-#
-# Get PKS UAA Secret from Opsman > PKS Tile >  Credentials Tab > UAA Management Admin Client  > Link to Creds  > Secret
-# uaac token client get admin -s $UAA_MGMT_ADMIN_CLIENT_SECRET
-#
-# Grant PKS Access
-# uaac user add $USERNAME --email $EMAIL -p $PASSWORD
-#
-# Add Scope to User
-# uaac member add (pks.clusters.admin | pks.clusters.manage)
-#
-# ## Ueage ./this-script.sh userX
-#for POST_FIX in {a..m}; do
-#  THIS_USER="$1$POST_FIX-admin"
-#
-#  echo "Adding user: $THIS_USER with Scope: pks.clusters.admin"
-#  uaac user add "$THIS_USER" --emails $THIS_USER@email.com -p password
-#  uaac member add pks.clusters.admin $THIS_USER
-#done
-#
-#for POST_FIX in {a..m}; do
-#  THIS_USER="$1$POST_FIX-manage"
-#
-#  echo "Adding user: $THIS_USER with Scope: pks.clusters.manage"
-#  uaac user add "$THIS_USER" --emails $THIS_USER@email.com -p password
-#  uaac member add pks.clusters.manage $THIS_USER
-#done
-#
-# make user2-pks firewall rule allowing 8443 for master access
-# Do not give anyone credentials....they will break your heart
-
-# Destroying Compute VMs with GCLOUD
-# Remove first row showing NAME
-# scorched earth
-# for vm in $(gcloud compute instances list | awk '{print $1}'); do
-#   gcloud compute instances delete $vm --quiet
-# done
-
-# om ip
-# lb ip
-# harbor ip
-# nat ip
-
