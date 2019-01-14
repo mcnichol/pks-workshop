@@ -130,9 +130,19 @@ case $COMMAND in
     ;;
 
   create-pks)
-    gcloud compute addresses create $ADDRESS_PKS_API_LB --region $GCLOUD_REGION
-    gcloud compute addresses create $ADDRESS_PKS_CLUSTER --region $GCLOUD_REGION
-    gcloud compute addresses create $ADDRESS_PKS_HARBOR --region $GCLOUD_REGION
+    gcloud compute addresses create $ADDRESS_PKS_API_LB   --region $GCLOUD_REGION
+    gcloud compute addresses create $ADDRESS_PKS_CLUSTER  --region $GCLOUD_REGION
+    gcloud compute addresses create $ADDRESS_PKS_HARBOR   --region $GCLOUD_REGION
+
+    IP=$(gcloud compute addresses describe $ADDRESS_PKS_API_LB --region=$GCLOUD_REGION --format="value(address)")
+    echo -e "\nGCP Load Balancer: $ADDRESS_PKS_API_LB\n\tUpdate DNS entry for 'api.$USER.pks.mcnichol.rocks' to IP: $IP\n"
+    sleep 5
+    IP=$(gcloud compute addresses describe $ADDRESS_PKS_CLUSTER  --region=$GCLOUD_REGION --format="value(address)")
+    echo -e "\nGCP Load Balancer: $ADDRESS_PKS_CLUSTER\n\tUpdate DNS entry for '$USER.cluster.mcnichol.rocks' to IP: $IP\n"
+    sleep 5
+    IP=$(gcloud compute addresses describe $ADDRESS_PKS_HARBOR   --region=$GCLOUD_REGION --format="value(address)")
+    echo -e "\nGCP Load Balancer: $ADDRESS_PKS_HARBOR\n\tUpdate DNS entry for '$USER.harbor.mcnichol.rocks' to IP: $IP\n"
+    sleep 5 
 
     gcloud iam service-accounts create $MASTER_SERVICE_ACCOUNT --display-name=$MASTER_SERVICE_ACCOUNT
     gcloud iam service-accounts keys create $MASTER_SERVICE_ACCOUNT.key.json --iam-account=$MASTER_IAM_EMAIL
