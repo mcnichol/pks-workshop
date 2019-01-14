@@ -1,6 +1,6 @@
 # PKS Worshop
 
-This script is for setting up a PKS Workshop in the "Let's bake a cake in 5 minutes" demo style where things are in various key stages of configuration to show configuration but not require we wait for it to "do-the-thing" and complete an actual installation.
+This script is for setting up a PKS Workshop in the "Let's bake a cake in 5 minutes" demo style where things are in various key stages of configuration to show interactions but not require waiting for it to "do-the-thing" and complete an actual installation.
 
 ## TODO - What's on the Roadmap
 * ~~Allow running pks-workshop command folder agnostic~~
@@ -27,7 +27,8 @@ This script is for setting up a PKS Workshop in the "Let's bake a cake in 5 minu
 * Remove references to PAS and make PKS specific
 * Get BOSH exports in creds file on opsman 
 * Integrate NAT properly
-
+* Wavefront 
+*
 ## Notes:
 
 ### Created BOSH Commandline Credentials on each Opsman.  User can now:

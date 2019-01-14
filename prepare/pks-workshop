@@ -8,7 +8,7 @@ USER="$2"
 PROJECT_ID="$3"
 
 ### This section for General Configuration
-GCLOUD_REGION="us-east1"
+GCLOUD_REGION="us-east4"
 GCLOUD_ZONE="$GCLOUD_REGION-b"
 
 ### This section for GCP Prep and Configuration
@@ -16,7 +16,6 @@ MY_PKS="$USER-pks"
 PKS_SERVICE_ACCOUNT="$MY_PKS-service-account"
 PKS_IAM_EMAIL="${PKS_SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com"
 NETWORK="$MY_PKS-network"
-NETWORK_SUBNET_INFRA="$MY_PKS-subnet-infrastructure"
 NETWORK_SUBNET_RUNTIME="$MY_PKS-subnet-runtime"
 NETWORK_SUBNET_SERVICES="$MY_PKS-subnet-services"
 
@@ -36,8 +35,9 @@ INSTANCE_OPSMAN="$MY_PKS-opsman"
 ADDRESS_OPSMAN="$MY_PKS-om-ip"
 
 ### This section for K8s Master/Worker Configuration
-ADDRESS_PKS_LB="$MY_PKS-lb"
+ADDRESS_PKS_API_LB="$MY_PKS-api-lb"
 ADDRESS_PKS_CLUSTER="$MY_PKS-cluster"
+ADDRESS_PKS_HARBOR="$MY_PKS-harbor"
 
 MASTER_SERVICE_ACCOUNT="$MY_PKS-master"
 MASTER_IAM_EMAIL="$MASTER_SERVICE_ACCOUNT@$PROJECT_ID.iam.gserviceaccount.com"
@@ -45,7 +45,8 @@ MASTER_IAM_EMAIL="$MASTER_SERVICE_ACCOUNT@$PROJECT_ID.iam.gserviceaccount.com"
 WORKER_SERVICE_ACCOUNT="$MY_PKS-worker"
 WORKER_IAM_EMAIL="$WORKER_SERVICE_ACCOUNT@$PROJECT_ID.iam.gserviceaccount.com"
 
-FW_RULE_ALLOW_PKS_LB="$MY_PKS-api"
+FW_RULE_ALLOW_PKS_API_LB="$MY_PKS-api-lb"
+FW_RULE_ALLOW_HARBOR="$MY_PKS-harbor"
 
 # Authenticate with gcloud unless already logged in
 GCLOUD_CURRENT_AUTHENTICATED="$(gcloud auth list --filter=status:ACTIVE --format='value(account)')"
@@ -55,8 +56,19 @@ if [ -z $GCLOUD_CURRENT_AUTHENTICATED ]; then
 else
   echo "Currently logged in with: $GCLOUD_CURRENT_AUTHENTICATED"
   echo "To logout execute:"
-  echo "gcloud auth revoke $GCLOUD_CURRENT_AUTHENTICATED"
+  echo -e "\tgcloud auth revoke $GCLOUD_CURRENT_AUTHENTICATED"
+  echo ""
 fi
+
+enable_gcp_apis(){
+  #@TODO - Do this programmatically
+
+  echo ""
+  echo "Ensure you have: "
+  echo "* Enabled Compute Engine API"
+  echo "* Enabled Cloud Resource Manager API"
+  echo ""
+}
 
 case $COMMAND in
   create-gcp)
@@ -70,43 +82,45 @@ case $COMMAND in
     gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$PKS_IAM_EMAIL --role=roles/compute.storageAdmin
     gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$PKS_IAM_EMAIL --role=roles/storage.admin
 
+    enable_gcp_apis
+
     gcloud compute networks create "$NETWORK" --subnet-mode=custom
-    gcloud compute networks subnets create "$NETWORK_SUBNET_INFRA"    --network="$NETWORK" --range=192.168.101.0/26 --region="$GCLOUD_REGION"
     gcloud compute networks subnets create "$NETWORK_SUBNET_RUNTIME"  --network="$NETWORK" --range=192.168.16.0/22  --region="$GCLOUD_REGION"
     gcloud compute networks subnets create "$NETWORK_SUBNET_SERVICES" --network="$NETWORK" --range=192.168.20.0/22  --region="$GCLOUD_REGION"
 
-#    # Create NAT Instance for limiting exposed endpoints
-#    gcloud compute addresses create $ADDRESS_NAT --region $GCLOUD_REGION
-#    gcloud compute instances create "$INSTANCE_NAT" \
-#      --project "$PROJECT_ID" \
-#      --zone "$GCLOUD_ZONE" \
-#      --network-interface address=$ADDRESS_NAT,private-network-ip=192.168.101.2,network="$NETWORK",subnet="$NETWORK_SUBNET_INFRA" \
-#        --tags "nat-traverse","$MY_PKS-nat-instance" \
-#      --machine-type "n1-standard-4" \
-#        --metadata-from-file startup-script="$STARTUP_SCRIPTS/nat-gw-startup.sh" \
-#        --image "ubuntu-1404-trusty-v20181203" \
-#        --image-project "ubuntu-os-cloud" \
-#        --boot-disk-size "10" \
-#        --boot-disk-type "pd-standard" \
-#        --can-ip-forward
-#
-#    # Create Routes
-#    gcloud compute routes create $ROUTE_INSTANCE_NAT --destination-range=0.0.0.0/0 --priority=800 --tags $MY_PKS --next-hop-instance=$INSTANCE_NAT --network=$NETWORK
+    # Create NAT Instance for limiting exposed endpoints
+    gcloud compute addresses create $ADDRESS_NAT --region $GCLOUD_REGION
+    gcloud compute instances create "$INSTANCE_NAT" \
+      --project "$PROJECT_ID" \
+      --zone "$GCLOUD_ZONE" \
+      --network-interface address=$ADDRESS_NAT,private-network-ip=192.168.16.2,network="$NETWORK",subnet="$NETWORK_SUBNET_RUNTIME" \
+        --tags "nat-traverse","$MY_PKS-nat-instance" \
+      --machine-type "n1-standard-4" \
+        --metadata-from-file startup-script="$STARTUP_SCRIPTS/nat-gw-startup.sh" \
+        --image "ubuntu-1404-trusty-v20181203" \
+        --image-project "ubuntu-os-cloud" \
+        --boot-disk-size "10" \
+        --boot-disk-type "pd-standard" \
+        --can-ip-forward
+
+    # Create Routes
+    gcloud compute routes create $ROUTE_INSTANCE_NAT --destination-range=0.0.0.0/0 --priority=800 --tags $MY_PKS --next-hop-instance=$INSTANCE_NAT --network=$NETWORK
 
     # Allow Internal && Director communication over SSH and CLI req'd ports
     gcloud compute firewall-rules create $FW_RULE_ALLOW_SSH       --network=$NETWORK --allow=tcp:22         --source-ranges=0.0.0.0/0   --target-tags="allow-ssh"
     gcloud compute firewall-rules create $FW_RULE_ALLOW_HTTP      --network=$NETWORK --allow=tcp:80         --source-ranges=0.0.0.0/0   --target-tags="allow-http","router"
     gcloud compute firewall-rules create $FW_RULE_ALLOW_HTTPS     --network=$NETWORK --allow=tcp:443        --source-ranges=0.0.0.0/0   --target-tags="allow-https","router"
     gcloud compute firewall-rules create $FW_RULE_ALLOW_HTTP_8080 --network=$NETWORK --allow=tcp:8080       --source-ranges=0.0.0.0/0   --target-tags="router"
-    gcloud compute firewall-rules create $FW_RULE_ALLOW_PAS_ALL   --network=$NETWORK --allow=tcp,udp,icmp   --source-tags="$MY_PKS","$MY_PKS-opsman","nat-traverse" --target-tags="$MY_PKS","$MY_PKS-opsman","nat-traverse"
-    gcloud compute firewall-rules create $FW_RULE_ALLOW_SSH_PROXY --network=$NETWORK --allow=tcp:2222       --source-ranges=0.0.0.0/0  --target-tags="$MY_PKS-ssh-proxy"
+    gcloud compute firewall-rules create $FW_RULE_ALLOW_PAS_ALL   --network=$NETWORK --allow=tcp,udp,icmp   --source-tags="$USER-pks","$USER-pks-opsman","nat-traverse" --target-tags="$USER-pks","$USER-pks-opsman","nat-traverse"
+    gcloud compute firewall-rules create $FW_RULE_ALLOW_CF_TCP    --network=$NETWORK --allow=tcp:1024-65535 --source-ranges=0.0.0.0/0   --target-tags="$USER-pks-cf-tcp"
+    gcloud compute firewall-rules create $FW_RULE_ALLOW_SSH_PROXY --network=$NETWORK --allow=tcp:2222       --source-ranges=0.0.0.0/0   --target-tags="$USER-pks-ssh-proxy","diego-brain"
 
     # Opsman Creation
     gcloud compute addresses create $ADDRESS_OPSMAN --region $GCLOUD_REGION
     gcloud compute instances create "$INSTANCE_OPSMAN" \
       --project $PROJECT_ID --zone $GCLOUD_ZONE \
-      --network-interface address="$ADDRESS_OPSMAN",private-network-ip=192.168.101.5,network=$NETWORK,subnet=$NETWORK_SUBNET_INFRA \
-      --tags "$MY_PKS-opsman","allow-https","allow-ssh" \
+      --network-interface address="$ADDRESS_OPSMAN",private-network-ip=192.168.16.5,network=$NETWORK,subnet=$NETWORK_SUBNET_RUNTIME \
+      --tags "$USER-pks-opsman","allow-https","allow-ssh" \
       --machine-type "n1-standard-2" \
         --image "opsman-pcf-gcp-2-3" \
         --boot-disk-size "100" --boot-disk-type "pd-ssd" \
@@ -116,8 +130,9 @@ case $COMMAND in
     ;;
 
   create-pks)
-    gcloud compute addresses create $ADDRESS_PKS_LB --region $GCLOUD_REGION
+    gcloud compute addresses create $ADDRESS_PKS_API_LB --region $GCLOUD_REGION
     gcloud compute addresses create $ADDRESS_PKS_CLUSTER --region $GCLOUD_REGION
+    gcloud compute addresses create $ADDRESS_PKS_HARBOR --region $GCLOUD_REGION
 
     gcloud iam service-accounts create $MASTER_SERVICE_ACCOUNT --display-name=$MASTER_SERVICE_ACCOUNT
     gcloud iam service-accounts keys create $MASTER_SERVICE_ACCOUNT.key.json --iam-account=$MASTER_IAM_EMAIL
@@ -134,7 +149,8 @@ case $COMMAND in
 
     gcloud projects add-iam-policy-binding $PROJECT_ID --member=serviceAccount:$WORKER_IAM_EMAIL --role=roles/compute.viewer
 
-    gcloud compute firewall-rules create $FW_RULE_ALLOW_PKS_LB --network=$NETWORK --priority=800 --direction=ingress --allow=tcp:8443,tcp:9021 --source-ranges=0.0.0.0/0   --target-tags="$FW_RULE_ALLOW_PKS_LB"
+    gcloud compute firewall-rules create $FW_RULE_ALLOW_PKS_API_LB --network=$NETWORK --priority=800 --direction=ingress --allow=tcp:8443,tcp:9021 --source-ranges=0.0.0.0/0   --target-tags="$FW_RULE_ALLOW_PKS_API_LB"
+    gcloud compute firewall-rules create $FW_RULE_ALLOW_HARBOR --network=$NETWORK --priority=1000 --direction=ingress --allow=tcp:8443,tcp:443 --source-ranges=0.0.0.0/0   --target-tags="$FW_RULE_ALLOW_HARBOR"
     ;;
   package)
       tar -cf $USER-keys.tar $USER*.json
@@ -154,7 +170,7 @@ case $COMMAND in
 
     #Keep these around till workshop completes
     #gcloud compute addresses delete $ADDRESS_OPSMAN --quiet
-    gcloud compute addresses delete $ADDRESS_NAT --quiet
+    #gcloud compute addresses delete $ADDRESS_NAT --quiet
 
     gcloud compute instances delete $INSTANCE_OPSMAN --quiet
     gcloud compute instances delete $INSTANCE_NAT --quiet
@@ -168,7 +184,6 @@ case $COMMAND in
     gcloud compute firewall-rules delete $FW_RULE_ALLOW_SSH_PROXY --quiet
 
     gcloud compute networks subnets delete $NETWORK_SUBNET_RUNTIME --quiet
-    gcloud compute networks subnets delete $NETWORK_SUBNET_INFRA --quiet
     gcloud compute networks subnets delete $NETWORK_SUBNET_SERVICES --quiet
 
     gcloud compute networks delete $NETWORK --quiet
@@ -176,8 +191,9 @@ case $COMMAND in
     ;;
   destroy-pks)
 
-    #gcloud compute addresses delete $ADDRESS_PKS_LB --quiet
+    #gcloud compute addresses delete $ADDRESS_PKS_API_LB --quiet
     #gcloud compute addresses delete $ADDRESS_PKS_CLUSTER --quiet
+    #gcloud compute addresses delete $ADDRESS_PKS_HARBORR --quiet
 
     gcloud iam service-accounts delete $MASTER_IAM_EMAIL --quiet
     gcloud projects remove-iam-policy-binding $PROJECT_ID --member=serviceAccount:$MASTER_IAM_EMAIL --role=roles/compute.instanceAdmin.v1
@@ -190,7 +206,12 @@ case $COMMAND in
     gcloud iam service-accounts delete $WORKER_IAM_EMAIL --quiet
     gcloud projects remove-iam-policy-binding $PROJECT_ID --member=serviceAccount:$WORKER_IAM_EMAIL --role=roles/compute.viewer
 
-    gcloud compute firewall-rules delete $FW_RULE_ALLOW_PKS_LB --quiet
+    gcloud compute firewall-rules delete $FW_RULE_ALLOW_PKS_API_LB --quiet
+    gcloud compute firewall-rules delete $FW_RULE_ALLOW_HARBOR --quiet
+
+    echo "Destroy Load Balancer Named: $MY_PKS-api-lb"
+    echo "Destroy Load Balancer Named: $MY_PKS-cluster"
+    echo "Destroy Load Balancer Named: $MY_PKS-harbor"
     ;;
   *)
     echo ""
