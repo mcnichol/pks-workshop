@@ -182,8 +182,8 @@ case $COMMAND in
     #gcloud compute addresses delete $ADDRESS_OPSMAN --quiet
     #gcloud compute addresses delete $ADDRESS_NAT --quiet
 
-    gcloud compute instances delete $INSTANCE_OPSMAN --quiet
-    gcloud compute instances delete $INSTANCE_NAT --quiet
+    gcloud compute instances delete $INSTANCE_OPSMAN --zone=$GCLOUD_ZONE --quiet
+    gcloud compute instances delete $INSTANCE_NAT --zone=$GCLOUD_ZONE --quiet
 
     gcloud compute firewall-rules delete $FW_RULE_ALLOW_SSH --quiet
     gcloud compute firewall-rules delete $FW_RULE_ALLOW_HTTP --quiet
@@ -219,9 +219,9 @@ case $COMMAND in
     gcloud compute firewall-rules delete $FW_RULE_ALLOW_PKS_API_LB --quiet
     gcloud compute firewall-rules delete $FW_RULE_ALLOW_HARBOR --quiet
 
-    echo "Destroy Load Balancer Named: $MY_PKS-api-lb"
-    echo "Destroy Load Balancer Named: $MY_PKS-cluster"
-    echo "Destroy Load Balancer Named: $MY_PKS-harbor"
+    echo "You must manually destroy Load Balancer Named: $MY_PKS-api-lb"
+    echo "You must manually destroy Load Balancer Named: $MY_PKS-cluster"
+    echo "You must manually destroy Load Balancer Named: $MY_PKS-harbor"
     ;;
   *)
     echo ""
