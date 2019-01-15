@@ -158,7 +158,7 @@ kubectl patch serviceaccount userserviceaccount -p '{\"imagePullSecrets\": [{\"n
 #### 6. Deploy Elastic Search
 <ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_2_DeployElasticsearch.yaml</pre></ul>
 
-#S### 7. Expose the Elastic Search Service
+#### 7. Expose the Elastic Search Service
 <ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_3_ExposeElasticsearch.yaml</pre></ul>
 
 #### 8. Load the Data via a Job
