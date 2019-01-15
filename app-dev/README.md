@@ -33,7 +33,7 @@ Prerequisite: Initialize the environment with required access variables. Please 
 Unix/Mac
 <pre>
 export MY_USER=[ 'userX' that you were supplied with ]
-export HARBOR_REGISTRY_URL="$MY_USER.harbor.pks.mcnichol.rocks"
+export HARBOR_REGISTRY_URL="$MY_USER.harbor.mcnichol.rocks"
 export HARBOR_USERNAME="admin"
 export HARBOR_PASSWORD="password"
 export HARBOR_EMAIL="admin@example.com"
@@ -42,7 +42,7 @@ export HARBOR_EMAIL="admin@example.com"
 Windows PowerShell
 <pre>
 $env:MY_USER=[ 'userX' that you were supplied with ]
-$env:HARBOR_REGISTRY_URL="$MY_USER.harbor.pks.mcnichol.rocks"
+$env:HARBOR_REGISTRY_URL="$MY_USER.harbor.mcnichol.rocks"
 $env:HARBOR_USERNAME="admin"
 $env:HARBOR_PASSWORD="password"
 $env:HARBOR_EMAIL="admin@example.com"
@@ -90,7 +90,7 @@ When prompted for choosing either the Kubeconfig or Token, choose Kubeconfig.  Y
 #### 1. *(Skip this step)* ~~Provision a StorageClass for the Cluster.~~ *This is provisioned at the Kubernetes cluster level and therefore no need to namespace qualify it*
 
 <ul>GCP:
-<pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/application/master/Step_0_ProvisionStorageClass_GCP.yaml</pre>
+<pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_0_ProvisionStorageClass_GCP.yaml</pre>
 </ul>
 
 
