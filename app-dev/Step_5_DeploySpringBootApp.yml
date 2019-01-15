@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: geosearch
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: geosearch
+  template:
+    metadata:
+      labels:
+        app: geosearch
+    spec:
+      initContainers:
+      - name: init-myservice
+        image: busybox
+        command: ['sh', '-c', 'until nslookup elasticsearch; do echo waiting for elasticsearch; sleep 60; done;']     
+      containers:
+      - name: geosearch-app
+        image: user1.harbor.mcnichol.rocks/library/harbor-geosearch:4.0
+        ports:
+        - containerPort: 8080
+        imagePullPolicy: Always
+      serviceAccountName: userserviceaccount 
