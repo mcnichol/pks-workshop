@@ -1,5 +1,5 @@
 ## Pivotal Container Service Workshop
-This is a sample SpringBoot application that performs Geo Bounded queries against an Elastic Search instance and plots the data on a map interactively. This application can be run on a workstation or in a cloud environment such as Cloud Foundry. In this example, I will show how to deploy the application on a running Cloud Foundry instance.
+This is a sample SpringBoot application that performs Geo Bounded queries against an Elasticsearch instance and plots the data on a map interactively. This application can be run on a workstation or in a cloud environment such as Cloud Foundry. In this example, I will show how to deploy the application on a running Cloud Foundry instance.
 <!-- TOC depthFrom:3 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
 - [1. Install and Setup CLIs](#1-install-and-setup-clis)
@@ -155,10 +155,10 @@ kubectl patch serviceaccount userserviceaccount -p '{\"imagePullSecrets\": [{\"n
 #### 5. Create the Storage Volume
 <ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_1_ProvisionStorage.yaml</pre></ul>
 
-#### 6. Deploy Elastic Search
+#### 6. Deploy Elasticsearch
 <ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_2_DeployElasticsearch.yaml</pre></ul>
 
-#### 7. Expose the Elastic Search Service
+#### 7. Expose the Elasticsearch Service
 <ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_3_ExposeElasticsearch.yaml</pre></ul>
 
 #### 8. Load the Data via a Job
