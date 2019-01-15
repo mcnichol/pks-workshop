@@ -112,10 +112,10 @@ kubectl config set-context $(kubectl config current-context) --namespace=geosear
 <ul>Unix/Mac
 <pre>
 kubectl create secret docker-registry harborsecret  \
-  --docker-server="$(echo $HARBOR_REGISTRY_URL)"    \
-  --docker-email="$(echo $HARBOR_EMAIL)"            \
-  --docker-username="$(echo $HARBOR_USERNAME)"      \
-  --docker-password="$(echo $HARBOR_PASSWORD)"      
+  --docker-server="$HARBOR_REGISTRY_URL"  \
+  --docker-username="$HARBOR_USERNAME"    \
+  --docker-password="$HARBOR_PASSWORD"    \
+  --docker-email="$HARBOR_EMAIL"
 </pre>
 </ul>
 
@@ -123,9 +123,9 @@ kubectl create secret docker-registry harborsecret  \
 <pre>
 kubectl create secret docker-registry harborsecret    `
   --docker-server="$(echo $env:HARBOR_REGISTRY_URL)"  `
-  --docker-email="$(echo $env:HARBOR_EMAIL)"          `
   --docker-username="$(echo $env:HARBOR_USERNAME)"    `
-  --docker-password="$(echo $env:HARBOR_PASSWORD)"
+  --docker-password="$(echo $env:HARBOR_PASSWORD)"    `
+  --docker-email="$(echo $env:HARBOR_EMAIL)"
 </pre>
 </ul>
 
