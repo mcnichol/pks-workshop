@@ -180,3 +180,14 @@ kubectl patch serviceaccount userserviceaccount -p '{\"imagePullSecrets\": [{\"n
 #### 11. Scale the Frontend
 <ul><pre>kubectl scale deployment --replicas=3 geosearch</pre></ul>
 
+## Notes:
+The application can be seen running with the proxy enabled at:
+
+Get POD_NAME by running the command:  `kubectl get pods -o go-template --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}'`
+
+The Application POD can be accessed by entering the proxy url: `http://localhost:8001/api/v1/namespaces/default/pods/$POD_NAME/proxy/`
+
+You can view logs from the application directly by accessing `kubectl logs $POD_NAME` 
+*Note: If there is more than one container running inside a Pod you would need to specify it by name*
+
+If we want to execute commands directly against our Pod we can use the command: `kubectl exec $POD_NAME env`. If you are familiar with Docker and grabbing hold of an interactive terminal, we can do the same thing here with the command: `kubectl exec -ti $POD_NAME sh`
