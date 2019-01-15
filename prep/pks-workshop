@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 SCRIPT_DIR=${BASH_SOURCE%/*}
-STARTUP_SCRIPTS="$SCRIPT_DIR/../prepare/startup-scripts"
+STARTUP_SCRIPTS="$SCRIPT_DIR/../prep/startup-scripts"
 
 COMMAND="$1"
 USER="$2"
