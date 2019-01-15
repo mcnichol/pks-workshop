@@ -153,28 +153,28 @@ kubectl patch serviceaccount userserviceaccount -p '{\"imagePullSecrets\": [{\"n
 </ul>
 
 #### 5. Create the Storage Volume
-<ul><pre>kubectl create -f https://raw.githubusercontent.com/gvijayar/pks-workshop/master/Step_1_ProvisionStorage.yaml</pre></ul>
+<ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_1_ProvisionStorage.yaml</pre></ul>
 
 #### 6. Deploy Elastic Search
-<ul><pre>kubectl create -f https://raw.githubusercontent.com/gvijayar/pks-workshop/master/Step_2_DeployElasticSearch.yaml</pre></ul>
+<ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_2_DeployElasticsearch.yaml</pre></ul>
 
 #### 7. Expose the Elastic Search Service
-<ul><pre>kubectl create -f https://raw.githubusercontent.com/gvijayar/pks-workshop/master/Step_3_ExposeElasticSearch.yaml</pre></ul>
+<ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_3_ExposeElasticsearch.yaml</pre></ul>
 
 #### 8. Load the Data via a Job
-<ul><pre>kubectl create -f https://raw.githubusercontent.com/gvijayar/pks-workshop/master/Step_4_LoadData.yaml</pre></ul>
+<ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_4_LoadData.yaml</pre></ul>
 
 #### 9. Deploy the Spring Boot Geosearch Application
-<ul><pre>kubectl create -f https://raw.githubusercontent.com/gvijayar/pks-workshop/master/Step_5_DeploySpringBootApp.yaml</pre></ul>
+<ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_5_DeploySpringBootApp.yaml</pre></ul>
 
 #### 10. Expose the Spring Boot Application. This can be done in a couple of ways. We will look at two ways of doing it in this example.
 
 <ul>Exposing with the LoadBalancer
-<pre>kubectl create -f https://raw.githubusercontent.com/gvijayar/pks-workshop/master/Step_6_ExposeSpringBootApp.yaml</pre>
+<pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_6_ExposeSpringBootApp.yaml</pre>
 </ul>
 
 <ul>Exposing with the Ingress 
-<pre>kubectl create -f https://raw.githubusercontent.com/gvijayar/pks-workshop/master/Step_6_ExposeSpringBootAppIngress.yaml</pre>
+<pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_6_ExposeSpringBootAppIngress.yaml</pre>
 </ul>
 
 #### 11. Scale the Frontend
