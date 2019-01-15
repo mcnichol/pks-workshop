@@ -1,0 +1,13 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: geosearch-service
+spec:
+  selector:
+    app: geosearch
+  ports:
+  - protocol: TCP
+    name: http
+    port: 80
+    targetPort: 8080
+  type: LoadBalancer
