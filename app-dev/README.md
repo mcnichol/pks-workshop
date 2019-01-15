@@ -134,7 +134,7 @@ kubectl create secret docker-registry harborsecret    `
 <pre>kubectl get secret harborsecret -o json | jq -r '.data.".dockerconfigjson"' | base64 --decode</pre>
 </ul>
 <ul>Windows PowerShell:
-<pre>kubectl get secret harborsecret -o json</pre> (then decrypt the <pre>.data.dockerconfigjson</pre> section with a base64 decoder
+<pre>kubectl get secret harborsecret -o json</pre> (then decrypt the <i>.data.dockerconfigjson</i> section with a base64 decoder
 </ul>
 
 #### 4. Create a new Service Account and Image pull secret
