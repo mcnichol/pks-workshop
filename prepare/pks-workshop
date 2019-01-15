@@ -88,23 +88,23 @@ case $COMMAND in
     gcloud compute networks subnets create "$NETWORK_SUBNET_RUNTIME"  --network="$NETWORK" --range=192.168.16.0/22  --region="$GCLOUD_REGION"
     gcloud compute networks subnets create "$NETWORK_SUBNET_SERVICES" --network="$NETWORK" --range=192.168.20.0/22  --region="$GCLOUD_REGION"
 
-    # Create NAT Instance for limiting exposed endpoints
-    gcloud compute addresses create $ADDRESS_NAT --region $GCLOUD_REGION
-    gcloud compute instances create "$INSTANCE_NAT" \
-      --project "$PROJECT_ID" \
-      --zone "$GCLOUD_ZONE" \
-      --network-interface address=$ADDRESS_NAT,private-network-ip=192.168.16.2,network="$NETWORK",subnet="$NETWORK_SUBNET_RUNTIME" \
-        --tags "nat-traverse","$MY_PKS-nat-instance" \
-      --machine-type "n1-standard-4" \
-        --metadata-from-file startup-script="$STARTUP_SCRIPTS/nat-gw-startup.sh" \
-        --image "ubuntu-1404-trusty-v20181203" \
-        --image-project "ubuntu-os-cloud" \
-        --boot-disk-size "10" \
-        --boot-disk-type "pd-standard" \
-        --can-ip-forward
-
-    # Create Routes
-    gcloud compute routes create $ROUTE_INSTANCE_NAT --destination-range=0.0.0.0/0 --priority=800 --tags $MY_PKS --next-hop-instance=$INSTANCE_NAT --network=$NETWORK
+#    # Create NAT Instance for limiting exposed endpoints
+#    gcloud compute addresses create $ADDRESS_NAT --region $GCLOUD_REGION
+#    gcloud compute instances create "$INSTANCE_NAT" \
+#      --project "$PROJECT_ID" \
+#      --zone "$GCLOUD_ZONE" \
+#      --network-interface address=$ADDRESS_NAT,private-network-ip=192.168.16.2,network="$NETWORK",subnet="$NETWORK_SUBNET_RUNTIME" \
+#        --tags "nat-traverse","$MY_PKS-nat-instance" \
+#      --machine-type "n1-standard-4" \
+#        --metadata-from-file startup-script="$STARTUP_SCRIPTS/nat-gw-startup.sh" \
+#        --image "ubuntu-1404-trusty-v20181203" \
+#        --image-project "ubuntu-os-cloud" \
+#        --boot-disk-size "10" \
+#        --boot-disk-type "pd-standard" \
+#        --can-ip-forward
+#
+#    # Create Routes
+#    gcloud compute routes create $ROUTE_INSTANCE_NAT --destination-range=0.0.0.0/0 --priority=800 --tags $MY_PKS --next-hop-instance=$INSTANCE_NAT --network=$NETWORK
 
     # Allow Internal && Director communication over SSH and CLI req'd ports
     gcloud compute firewall-rules create $FW_RULE_ALLOW_SSH       --network=$NETWORK --allow=tcp:22         --source-ranges=0.0.0.0/0   --target-tags="allow-ssh"
@@ -176,14 +176,14 @@ case $COMMAND in
     gcloud projects remove-iam-policy-binding $PROJECT_ID --member=serviceAccount:$PKS_IAM_EMAIL --role=roles/compute.storageAdmin
     gcloud projects remove-iam-policy-binding $PROJECT_ID --member=serviceAccount:$PKS_IAM_EMAIL --role=roles/storage.admin
 
-    gcloud compute routes delete $ROUTE_INSTANCE_NAT --quiet
+#    gcloud compute routes delete $ROUTE_INSTANCE_NAT --quiet
 
     #Keep these around till workshop completes
     #gcloud compute addresses delete $ADDRESS_OPSMAN --quiet
     #gcloud compute addresses delete $ADDRESS_NAT --quiet
 
     gcloud compute instances delete $INSTANCE_OPSMAN --zone=$GCLOUD_ZONE --quiet
-    gcloud compute instances delete $INSTANCE_NAT --zone=$GCLOUD_ZONE --quiet
+#    gcloud compute instances delete $INSTANCE_NAT --zone=$GCLOUD_ZONE --quiet
 
     gcloud compute firewall-rules delete $FW_RULE_ALLOW_SSH --quiet
     gcloud compute firewall-rules delete $FW_RULE_ALLOW_HTTP --quiet
@@ -193,8 +193,8 @@ case $COMMAND in
     gcloud compute firewall-rules delete $FW_RULE_ALLOW_CF_TCP --quiet
     gcloud compute firewall-rules delete $FW_RULE_ALLOW_SSH_PROXY --quiet
 
-    gcloud compute networks subnets delete $NETWORK_SUBNET_RUNTIME --quiet
-    gcloud compute networks subnets delete $NETWORK_SUBNET_SERVICES --quiet
+    gcloud compute networks subnets delete $NETWORK_SUBNET_RUNTIME --region=$GCLOUD_REGION --quiet
+    gcloud compute networks subnets delete $NETWORK_SUBNET_SERVICES --region=$GCLOUD_REGION --quiet
 
     gcloud compute networks delete $NETWORK --quiet
 
