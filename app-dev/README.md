@@ -52,7 +52,7 @@ $env:HARBOR_EMAIL="admin@example.com"
 #### Get Cluster Credentials
 You will need to retrieve the cluster credentials from PKS. First login using the the PKS credentials that were provided to you for this lab exercise.
 
-<pre>pks login -a api.$MY_USER.pks.mcnichol.rocks -u $MY_USER -p password</pre>
+<pre>pks login -a api.$MY_USER.pks.mcnichol.rocks -u $MY_USER -p password -k</pre>
 
 Now you can retrive your Kubernetes cluster credentials. Please use the cluster name that was provided to you for this lab exercise.
 
