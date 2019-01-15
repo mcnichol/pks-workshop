@@ -52,7 +52,7 @@ $env:HARBOR_EMAIL="admin@example.com"
 #### Get Cluster Credentials
 You will need to retrieve the cluster credentials from PKS. First login using the the PKS credentials that were provided to you for this lab exercise.
 
-<pre>pks login -a api.$MY_USER.pks.mcnichol.rocks -u $MY_USER -p pas</pre>
+<pre>pks login -a api.$MY_USER.pks.mcnichol.rocks -u $MY_USER -p password</pre>
 
 Now you can retrive your Kubernetes cluster credentials. Please use the cluster name that was provided to you for this lab exercise.
 
@@ -90,7 +90,7 @@ When prompted for choosing either the Kubeconfig or Token, choose Kubeconfig.  Y
 #### 1. *(Skip this step)* ~~Provision a StorageClass for the Cluster.~~ *This is provisioned at the Kubernetes cluster level and therefore no need to namespace qualify it*
 
 <ul>GCP:
-<pre>kubectl create -f https://raw.githubusercontent.com/mmcnichol/pks-workshop/application/master/Step_0_ProvisionStorageClass_GCP.yaml</pre>
+<pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/application/master/Step_0_ProvisionStorageClass_GCP.yaml</pre>
 </ul>
 
 
@@ -158,7 +158,7 @@ kubectl patch serviceaccount userserviceaccount -p '{\"imagePullSecrets\": [{\"n
 #### 6. Deploy Elastic Search
 <ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_2_DeployElasticsearch.yaml</pre></ul>
 
-#### 7. Expose the Elastic Search Service
+#S### 7. Expose the Elastic Search Service
 <ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_3_ExposeElasticsearch.yaml</pre></ul>
 
 #### 8. Load the Data via a Job
