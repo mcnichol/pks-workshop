@@ -13,6 +13,7 @@ This is a sample SpringBoot application that performs Geo Bounded queries agains
 - [4. Lab Exercise: Deploy a Spring Boot application with an Elasticsearch Backend](#4-lab-exercise-deploy-a-springboot-application-with-an-elastic-search-backend)
 
 <!-- /TOC -->
+
 ### 1. Install and Setup CLIs
 #### Install PKS CLI
 In order to install the PKS CLI please follow these instructions: https://docs.pivotal.io/runtimes/pks/1-2/installing-pks-cli.html#windows. Note, you will need to register with network.pivotal.io in order to download the CLI.
@@ -25,7 +26,7 @@ You can install the kubectl CLI from PivNet as well, https://network.pivotal.io/
 What you download is the executable. After downloading, rename the file to `kubectl`, move it to where you like and make sure it's in your path.
 
 #### Alternatively
-You can leverage the pks-cli and kubectl-cli that are in the `bin/` folder of this repository.
+You can leverage the pks-cli and kubectl-cli that are in the `bin/` folder at the root of this repository.
 
 ### 2. Lab Exercise: Set Environment Variables
 Prerequisite: Initialize the environment with required access variables. Please use the account and user that was provided to you for this lab exercise.
@@ -87,28 +88,14 @@ When prompted for choosing either the Kubeconfig or Token, choose Kubeconfig.  Y
 *Note 2:* When using Mac you may need to hit `CMD` + `SHIFT` + `G` and enter `~/.kube/config` to access the hidden dot-folder.
 
 ### 4. Lab Exercise: Deploy A Spring Boot application with an Elasticsearch Backend
-#### 1. *(Skip this step)* ~~Provision a StorageClass for the Cluster.~~ *This is provisioned at the Kubernetes cluster level and therefore no need to namespace qualify it*
+#### 1. Provision a StorageClass for the Cluster. 
 
 <ul>GCP:
 <pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_0_ProvisionStorageClass_GCP.yaml</pre>
 </ul>
 
 
-#### 2. *(Skip this Step)* ~~Create a user defined Namespace. Note: Update the command below to use the namespace that you are going to be delpoying into.~~
-<ul>Unix/Mac
-<pre>
-kubectl create namespace geosearch-$(echo $USER_INDEX)
-kubectl config set-context $(kubectl config current-context) --namespace=geosearch-$(echo $USER_INDEX)
-</pre>
-</ul>
-
-<ul>Windows PowerShell
-<pre>kubectl create namespace geosearch-$(echo $env:USER_INDEX)
-kubectl config set-context $(kubectl config current-context) --namespace=geosearch-$(echo $env:USER_INDEX)
-</pre></ul>
-
-
-#### 3. Create Harbor Registry Secret. Use the Registry credentials that was provided to you for this step.
+#### 2. Create Harbor Registry Secret. Use the Registry credentials that was provided to you for this step.
 <ul>Unix/Mac
 <pre>
 kubectl create secret docker-registry harborsecret  \
@@ -137,7 +124,7 @@ kubectl create secret docker-registry harborsecret    `
 <pre>kubectl get secret harborsecret -o json</pre> (then decrypt the <i>.data.dockerconfigjson</i> section with a base64 decoder
 </ul>
 
-#### 4. Create a new Service Account and patch with the secret created in the previous step 
+#### 3. Create a new Service Account and patch with the secret created in the previous step 
 <ul>Unix/Mac
 <pre>
 kubectl create serviceaccount userserviceaccount
@@ -152,32 +139,26 @@ kubectl patch serviceaccount userserviceaccount -p '{\"imagePullSecrets\": [{\"n
 </pre>
 </ul>
 
-#### 5. Create the Storage Volume
+#### 4. Create the Storage Volume
 <ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_1_ProvisionStorage.yaml</pre></ul>
 
-#### 6. Deploy Elasticsearch
+#### 5. Deploy Elasticsearch
 <ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_2_DeployElasticsearch.yaml</pre></ul>
 
-#### 7. Expose the Elasticsearch Service
+#### 6. Expose the Elasticsearch Service
 <ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_3_ExposeElasticsearch.yaml</pre></ul>
 
-#### 8. Load the Data via a Job
+#### 7. Load the Data via a Job
 <ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_4_LoadData.yaml</pre></ul>
 
-#### 9. Deploy the Spring Boot Geosearch Application
+#### 8. Deploy the Spring Boot Geosearch Application
 <ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_5_DeploySpringBootApp.yaml</pre></ul>
 
-#### 10. Expose the Spring Boot Application. This can be done in a couple of ways. We will look at two ways of doing it in this example.
+#### 9. Expose the Spring Boot Application through Load Balancer. 
 
-<ul>Exposing with the LoadBalancer
-<pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_6_ExposeSpringBootApp.yaml</pre>
-</ul>
+<ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_6_ExposeSpringBootApp.yaml</pre></ul>
 
-<ul>Exposing with the Ingress 
-<pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_6_ExposeSpringBootAppIngress.yaml</pre>
-</ul>
-
-#### 11. Scale the Frontend
+#### 10. Scale the Frontend
 <ul><pre>kubectl scale deployment --replicas=3 geosearch</pre></ul>
 
 ## Notes:
