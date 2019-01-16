@@ -91,7 +91,7 @@ When prompted for choosing either the Kubeconfig or Token, choose Kubeconfig.  Y
 #### 1. Provision a StorageClass for the Cluster. 
 
 <ul>GCP:
-<pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_0_ProvisionStorageClass_GCP.yaml</pre>
+<pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app/Step_0_ProvisionStorageClass_GCP.yaml</pre>
 </ul>
 
 
@@ -140,23 +140,23 @@ kubectl patch serviceaccount userserviceaccount -p '{\"imagePullSecrets\": [{\"n
 </ul>
 
 #### 4. Create the Storage Volume
-<ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_1_ProvisionStorage.yaml</pre></ul>
+<ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app/Step_1_ProvisionStorage.yaml</pre></ul>
 
 #### 5. Deploy Elasticsearch
-<ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_2_DeployElasticsearch.yaml</pre></ul>
+<ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app/Step_2_DeployElasticsearch.yaml</pre></ul>
 
 #### 6. Expose the Elasticsearch Service
-<ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_3_ExposeElasticsearch.yaml</pre></ul>
+<ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app/Step_3_ExposeElasticsearch.yaml</pre></ul>
 
 #### 7. Load the Data via a Job
-<ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_4_LoadData.yaml</pre></ul>
+<ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app/Step_4_LoadData.yaml</pre></ul>
 
 #### 8. Deploy the Spring Boot Geosearch Application
-<ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_5_DeploySpringBootApp.yaml</pre></ul>
+<ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app/Step_5_DeploySpringBootApp.yaml</pre></ul>
 
 #### 9. Expose the Spring Boot Application through Load Balancer. 
 
-<ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app-dev/Step_6_ExposeSpringBootApp.yaml</pre></ul>
+<ul><pre>kubectl create -f https://raw.githubusercontent.com/mcnichol/pks-workshop/master/app/Step_6_ExposeSpringBootApp.yaml</pre></ul>
 
 #### 10. Scale the Frontend
 <ul><pre>kubectl scale deployment --replicas=3 geosearch</pre></ul>
