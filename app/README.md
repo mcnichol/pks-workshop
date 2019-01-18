@@ -43,11 +43,13 @@ export HARBOR_EMAIL="admin@example.com"
 Windows PowerShell
 <pre>
 $env:MY_USER=[ 'userX' that you were supplied with ]
-$env:HARBOR_REGISTRY_URL="$MY_USER.harbor.mcnichol.rocks"
+$env:HARBOR_REGISTRY_URL="$env:MY_USER.harbor.mcnichol.rocks"
 $env:HARBOR_USERNAME="admin"
 $env:HARBOR_PASSWORD="password"
 $env:HARBOR_EMAIL="admin@example.com"
 </pre>
+
+**Note for Windows Powershell Users:** To use variables in your commands you must replace `$VARIABLE_NAME` with `$env:VARIABLE_NAME`. For example: `$MY_USER` -> `$env:MY_USER`
 
 ### 3. Cluster Access and Validation
 #### Get Cluster Credentials
